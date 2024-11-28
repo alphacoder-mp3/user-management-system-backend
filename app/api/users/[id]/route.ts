@@ -4,7 +4,7 @@ import { hashPassword, verifyToken } from '@/lib/auth';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify token
@@ -14,7 +14,7 @@ export async function DELETE(
     }
 
     // Extract user ID from params
-    const userId = params.id;
+    const { id: userId } = await params;
 
     if (!userId) {
       return NextResponse.json(
@@ -52,7 +52,7 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify token
@@ -62,7 +62,7 @@ export async function PUT(
     }
 
     // Extract user ID from params
-    const userId = params.id;
+    const { id: userId } = await params;
 
     if (!userId) {
       return NextResponse.json(
