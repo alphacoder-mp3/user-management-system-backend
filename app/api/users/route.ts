@@ -11,6 +11,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Extract pagination parameters from the URL
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '0', 10);
+
+    // If limit is 0 or not provided, return all users (backward compatibility)
     const users = await prisma.user.findMany({
       select: {
         id: true,
@@ -18,8 +24,31 @@ export async function GET(request: NextRequest) {
         lastName: true,
         email: true,
       },
+      ...(limit > 0
+        ? {
+            skip: (page - 1) * limit,
+            take: limit,
+          }
+        : {}),
     });
 
+    // If pagination is used, include total count and pagination info
+    if (limit > 0) {
+      const totalUsers = await prisma.user.count();
+      const totalPages = Math.ceil(totalUsers / limit);
+
+      return NextResponse.json({
+        users,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalUsers,
+          pageSize: limit,
+        },
+      });
+    }
+
+    // For backward compatibility, return users directly when no pagination
     return NextResponse.json(users);
   } catch (error) {
     console.error('Fetch users error:', error);
